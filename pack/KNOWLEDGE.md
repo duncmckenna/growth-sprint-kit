@@ -678,3 +678,27 @@ Cite as [F] with the URL. Recheck anything price- or feature-related on the day:
 - [ ] Budget → CAC-per-channel table and sensitivity table exist.
 - [ ] The Lovable link works, and screenshots exist as a backup.
 - [ ] The AI log has at least 6 rows, including at least one override.
+
+
+---
+
+## §9 Prospector pre-work: findings (run 30 Oct 2026, home_furniture seed)
+The pipeline: Meta Ad Library API keyword seed → DNS and homepage stack check → ranked top 50 → parallel AI research agents judging fit and paid-media ownership → scored routes. [F] figures come from the run's own output.
+
+| Step | Result |
+|---|---|
+| Seed: 5 keywords × 500 active UK ads | 270 advertiser domains, plus 277 pages with no resolvable domain |
+| Shopify via DNS (homepages blocked, about half returned 429s) | 132 of 270 on Shopify |
+| Prefiltered (stack signal, UK not ruled out, not junk) | 122 |
+| Researched (top 50 by rank) | **Fit: 15 yes (30%), 15 no (30%), 20 unsure or enterprise (40%)** |
+| Paid-media ownership | **49 of 50 unknown** (low confidence), 1 hybrid, 0 in-house-only. Own-site fetches were rate-limited for 46 of 50 |
+
+**What I concluded:**
+1. **Agency involvement is effectively unobservable from outside for SME D2C** [I, from 49/50 unknown]. So the in-house-only filter belongs **at first touch and in product**, not in list-building: ask "Who runs your paid media day to day?" in the free tool, at sign-up and in the outbound opener. Route on the answer. Collecting the answers also builds the dataset to size the segment, which is better than guessing from outside.
+2. **Ad Library keyword search is a poor seed but a good activity check** [F, 30% fit; ad volume didn't predict fit]. Better: seed from category and stack sources (Storeleads UK + Klaviyo/Shopify + home categories, or a curated list), then use the Ad Library to confirm a brand is actively advertising and DNS to confirm Shopify.
+3. **DNS beats scraping for stack detection on Shopify** [F, 132 detected despite 429s].
+
+**Slide text (appendix, "What I tested before today"):**
+> I built a pipeline that pulled 2,500 live UK furniture ads from Meta's Ad Library, checked 270 advertisers' stacks, and had AI research agents judge fit and who runs their paid media. Two lessons changed my plan: only 30% of advertisers were genuine UK D2C fits, so I seed from category and stack data and use ad activity as a filter. And agency involvement was invisible from outside in 49 of 50 cases, so I qualify it at first touch and in product, not in list-building.
+
+**Say it this way:** it was a fast test of my own hypothesis, with a clear result and a design change. Present it as evidence of method, not as a polished prospect list.

@@ -1,0 +1,49 @@
+# Outra prospector config. Edit freely; every stage reads this file.
+
+country: GB                     # Meta uses GB; BuiltWith exports use UK
+contact_for_user_agent: ""      # put a contact email here before running techcheck (polite crawling)
+
+meta:
+  graph_version: v26.0          # current version shown in Graph API Explorer (Oct 2026)
+  token_env: META_AD_LIBRARY_TOKEN
+  max_pages_per_keyword: 5      # pages of results (limit below = ads per page)
+  limit: 100
+  request_delay_seconds: 1.0
+  search_type: KEYWORD_EXACT_PHRASE   # KEYWORD_UNORDERED matches words anywhere (noisier)
+  established_days: 30          # an ad still running after this many days = established advertiser
+
+# Wedge categories -> ad-text keywords searched in the Meta Ad Library (UK-delivered, active ads)
+categories:
+  home_furniture: [sofa, "dining table", wardrobe, "bed frame", mattress]
+  kitchen_home: [cookware, "kitchen knives", homeware, "bedding set"]
+  garden_outdoor: ["garden furniture", "outdoor rug", "garden room"]
+  home_services: ["solar panels", "heat pump", "ev charger", "home battery"]
+  pet: ["dog bed", "dog food subscription"]
+
+techcheck:
+  timeout_seconds: 15
+  delay_seconds: 2.0            # pause before each homepage request
+  workers: 2                    # many stores sit on Shopify's shared edge; >2 parallel triggers 429s
+  retries_on_429: 3             # back off and retry when rate-limited (honours Retry-After)
+  max_backoff_seconds: 60
+
+scoring:
+  weights:
+    shopify: 1.0
+    klaviyo: 2.0
+    other_crm: 1.0              # HubSpot / Customer.io
+    uk_signal: 1.0              # GBP currency or .co.uk / .uk
+    meta_pixel: 0.5
+    active_ads: 2.0             # scaled log of active ad count, capped
+    recent_ads: 1.0             # an ad started in the last 30 days
+    established: 2.0            # has an ad still running >= established_days old (sustained spend)
+    junk_domain: -4.0           # throwaway-looking domain (e.g. brand-com.store), see JUNK patterns
+  agency_multiplier:            # Duncan's filter: agency involvement decides the route
+    in_house_only: 1.0
+    unknown: 0.6
+    hybrid: 0.0                 # routed to agency channel, not self-serve
+    agency_run: 0.0
+  tiers: {A: 6.0, B: 4.0}       # score >= A -> Tier A, >= B -> Tier B, else C
+
+classify:
+  batch_size: 10                # brands per research subagent

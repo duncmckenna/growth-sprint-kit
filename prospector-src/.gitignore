@@ -1,0 +1,6 @@
+data/accounts.json
+data/classify/
+data/meta_unresolved_pages.json
+out/
+__pycache__/
+.pytest_cache/

@@ -24,7 +24,7 @@ def main():
     s = sub.add_parser("import"); s.add_argument("csv"); s.add_argument("--source", required=True)
     sub.add_parser("ad-activity")
     sub.add_parser("page-activity")
-    s = sub.add_parser("techcheck"); s.add_argument("--refresh", action="store_true"); s.add_argument("--retry-failed", action="store_true")
+    s = sub.add_parser("techcheck"); s.add_argument("--refresh", action="store_true"); s.add_argument("--retry-failed", action="store_true"); s.add_argument("--max-minutes", type=float)
     s = sub.add_parser("export-batches"); s.add_argument("--all", action="store_true"); s.add_argument("--refresh", action="store_true")
     sub.add_parser("merge"); sub.add_parser("score"); sub.add_parser("status")
     a = ap.parse_args()
@@ -39,7 +39,7 @@ def main():
     elif a.cmd == "page-activity":
         res = meta_ads.refresh_page_activity(cfg)
     elif a.cmd == "techcheck":
-        res = techcheck.run(cfg, refresh=a.refresh, retry_failed=a.retry_failed)
+        res = techcheck.run(cfg, refresh=a.refresh, retry_failed=a.retry_failed, max_minutes=a.max_minutes)
     elif a.cmd == "export-batches":
         res = classify.export_batches(cfg, include_all=a.all, refresh=a.refresh)
     elif a.cmd == "merge":

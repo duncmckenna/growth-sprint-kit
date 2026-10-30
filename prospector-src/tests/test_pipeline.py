@@ -65,7 +65,7 @@ def test_aggregate_by_page():
 def run_seed_and_tech():
     res = meta_ads.seed_from_ads(CFG, client=FakeMeta(ADS), categories=["home_furniture"])
     assert res["unresolved_pages"] == 1
-    techcheck.run(CFG, fetcher=FakeFetcher())
+    techcheck.run(CFG, fetcher=FakeFetcher(), quiet=True)
 
 
 def test_techcheck_detection():
@@ -83,7 +83,7 @@ def test_csv_import_and_prefilter(tmp_path):
     assert res == {"rows_imported": 1, "rows_skipped": 1, "accounts": 1}
     acc = load_accounts()["plainshop.co.uk"]
     assert acc["declared_klaviyo"] and acc["declared_shopify"] and acc["brand"] == "Plain Shop"
-    techcheck.run(CFG, fetcher=FakeFetcher())
+    techcheck.run(CFG, fetcher=FakeFetcher(), quiet=True)
     assert classify.prefilter(load_accounts()["plainshop.co.uk"])   # declared Klaviyo + .uk
 
 
@@ -191,7 +191,17 @@ def test_backoff_on_429(monkeypatch):
         def get(self, url, timeout=None, allow_redirects=True):
             self.n += 1
             if url.endswith("robots.txt"): return R(404)
-            return R(429) if self.n < 4 else R(200)
+            return R(429) if self.n < 3 else R(200)   # one 429, then success on the single retry
     f = techcheck.Fetcher(CFG, session=S())
     html, status = f.homepage("brand.co.uk")
     assert status == "ok" and "shopify" in html
+
+
+def test_techcheck_resumes_and_time_limit():
+    run_seed_and_tech()
+    accs = load_accounts()
+    assert all("tech_status" in a for a in accs.values())          # saved
+    res = techcheck.run(CFG, fetcher=FakeFetcher(), quiet=True)       # nothing left to do
+    assert res["checked"] == 0
+    res = techcheck.run(CFG, fetcher=FakeFetcher(), refresh=True, max_minutes=-1, quiet=True)
+    assert res["checked"] == 0 and res["not_reached_time_limit"] == len(accs)

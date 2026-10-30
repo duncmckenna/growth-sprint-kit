@@ -54,22 +54,23 @@ class Fetcher:
         self.http.headers.update({"User-Agent": self.ua, "Accept": "text/html,application/xhtml+xml",
                                   "Accept-Language": "en-GB,en;q=0.9"})
 
-    def _get(self, url):
-        """GET with backoff on 429/503, honouring Retry-After."""
-        for attempt in range(self.retries + 1):
+    def _get(self, url, retries=None):
+        """GET with short, capped backoff on 429/503 (honours Retry-After up to max_backoff)."""
+        retries = self.retries if retries is None else retries
+        for attempt in range(retries + 1):
             r = self.http.get(url, timeout=self.timeout, allow_redirects=True)
-            if r.status_code not in (429, 503) or attempt == self.retries:
+            if r.status_code not in (429, 503) or attempt == retries:
                 return r
             ra = r.headers.get("Retry-After", "") if hasattr(r, "headers") else ""
-            wait = float(ra) if ra.replace(".", "", 1).isdigit() else self.delay * (2 ** (attempt + 2))
+            wait = float(ra) if ra.replace(".", "", 1).isdigit() else self.delay * (2 ** (attempt + 1))
             time.sleep(min(wait, self.max_backoff) + random.uniform(0, 1))
         return r
 
     def allowed(self, domain):
         rp = robotparser.RobotFileParser()
         try:
-            r = self._get(f"https://{domain}/robots.txt")
-            if r.status_code >= 400:
+            r = self._get(f"https://{domain}/robots.txt", retries=0)   # no backoff on robots.txt
+            if r.status_code >= 400:          # RFC 9309: 4xx (incl. 429) -> treat as no restrictions
                 return True
             rp.parse(r.text.splitlines())
             return rp.can_fetch(self.ua, f"https://{domain}/")
@@ -92,23 +93,43 @@ class Fetcher:
 RETRYABLE = ("http_429", "http_503", "http_500", "http_502", "error:")
 
 
-def run(cfg, fetcher=None, refresh=False, retry_failed=False):
+def run(cfg, fetcher=None, refresh=False, retry_failed=False, max_minutes=None, quiet=False):
+    """Checks homepages with visible progress, saving every 10 sites so it can be stopped and resumed."""
+    import sys
     fetcher = fetcher or Fetcher(cfg)
     accounts = load_accounts()
+    max_minutes = max_minutes or cfg["techcheck"].get("max_minutes", 30)
+    deadline = time.time() + max_minutes * 60
     if retry_failed:
         todo = [d for d, a in accounts.items() if str(a.get("tech_status", "")).startswith(RETRYABLE)]
     else:
         todo = [d for d, a in accounts.items() if refresh or "tech_status" not in a]
 
     def one(d):
+        if time.time() > deadline:
+            return d, None, None
         html, status = fetcher.homepage(d)
         return d, status, (detect(html, d) if html else None)
 
+    done = skipped = 0
     with ThreadPoolExecutor(max_workers=cfg["techcheck"]["workers"]) as ex:
         for d, status, tech in ex.map(one, todo):
+            if status is None:
+                skipped += 1
+                continue
+            done += 1
             accounts[d]["tech_status"] = status
             if tech:
                 accounts[d]["tech"] = tech
+            if not quiet:
+                flags = ",".join(k for k in ("shopify", "klaviyo", "hubspot", "gbp") if tech and tech.get(k) is True)
+                print(f"[{done}/{len(todo)}] {d}: {status}{' (' + flags + ')' if flags else ''}", file=sys.stderr, flush=True)
+            if done % 10 == 0:
+                save_accounts(accounts)
     save_accounts(accounts)
     ok = sum(1 for d in todo if accounts[d].get("tech_status") == "ok")
-    return {"checked": len(todo), "ok": ok}
+    res = {"checked": done, "ok": ok}
+    if skipped:
+        res["not_reached_time_limit"] = skipped
+        res["hint"] = "Run techcheck again to continue where it stopped."
+    return res

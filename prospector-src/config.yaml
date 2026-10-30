@@ -24,8 +24,9 @@ techcheck:
   timeout_seconds: 15
   delay_seconds: 2.0            # pause before each homepage request
   workers: 2                    # many stores sit on Shopify's shared edge; >2 parallel triggers 429s
-  retries_on_429: 3             # back off and retry when rate-limited (honours Retry-After)
-  max_backoff_seconds: 60
+  retries_on_429: 1             # one short retry when rate-limited; --retry-failed mops up later
+  max_backoff_seconds: 10
+  max_minutes: 30               # hard time limit per run; re-run to continue
 
 scoring:
   weights:

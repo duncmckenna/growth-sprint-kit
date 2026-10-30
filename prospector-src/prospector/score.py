@@ -3,7 +3,7 @@ from collections import Counter
 from .common import OUT, is_junk_domain, load_accounts, write_csv
 from .meta_ads import active_ads_score
 
-COLUMNS = ["tier", "route", "score", "brand", "domain", "categories", "agency_class", "agency_confidence",
+COLUMNS = ["tier", "route", "score", "brand", "domain", "fit", "fit_category", "uk_based", "categories", "agency_class", "agency_confidence",
            "trigger", "active_ads", "established", "earliest_ad_start", "junk_domain", "recent_ads", "latest_ad_start", "shopify", "klaviyo", "other_crm",
            "meta_pixel", "uk_signal", "evidence_urls", "ad_library_url", "sources"]
 
@@ -41,6 +41,12 @@ def score_account(acc, cfg):
     tiers = cfg["scoring"]["tiers"]
     tier = "A" if score >= tiers["A"] else "B" if score >= tiers["B"] else "C"
     route = _route(label)
+    fit = (acc.get("fit") or {}).get("fit")
+    uk = (acc.get("fit") or {}).get("uk_based")
+    if fit == "no" or uk == "no":
+        route, score, tier = "not_icp", 0, "-"
+    elif fit == "enterprise":
+        route, tier = "enterprise_sales", "-"
     if route == "agency_channel":
         tier = "-"
     ag = acc.get("agency") or {}
@@ -50,7 +56,8 @@ def score_account(acc, cfg):
         "agency_confidence": ag.get("confidence", ""), "trigger": trig, "active_ads": acc.get("active_ads", 0),
         "recent_ads": bool(acc.get("recent_ads")), "latest_ad_start": acc.get("latest_ad_start", ""),
         "established": bool(acc.get("established")), "earliest_ad_start": acc.get("earliest_ad_start", ""),
-        "junk_domain": junk,
+        "junk_domain": junk, "fit": fit or "", "fit_category": (acc.get("fit") or {}).get("category", ""),
+        "uk_based": uk or "",
         "evidence_urls": [e["url"] for e in ag.get("evidence") or []],
         "ad_library_url": acc.get("ad_library_url", ""), "sources": acc.get("sources", []),
     }

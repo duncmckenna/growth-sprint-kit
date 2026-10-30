@@ -11,7 +11,16 @@ Research batches are in `data/classify/batches/batch_*.json`. Each file holds 10
 ## Subagent prompt (paste the batch where it says)
 
 ```
-You are a B2B research analyst. For each UK brand below, determine who runs its paid media (Meta/TikTok/Google ads) day to day:
+You are a B2B research analyst. For each brand below, first judge FIT, then who runs its paid media.
+
+FIT for Outra's £699/month self-serve product:
+- fit "yes": a genuine UK-based D2C brand (own site, sells to UK consumers) of SME / mid-market size
+- fit "enterprise": a large retailer or household name with its own data team (e.g. national chains), not self-serve
+- fit "no": marketplace, dropshipper/throwaway store, app, publisher, non-UK brand, or not a consumer brand
+- fit "unsure": not enough evidence
+Also give uk_based (yes/no/unsure), a short category (e.g. "sofas", "beds & mattresses", "fashion") and a one-line fit_reason.
+
+Then determine who runs its paid media (Meta/TikTok/Google ads) day to day. If fit is "no", skip this and return classification "unknown":
 - in_house_only: an in-house paid social/PPC/performance person or team and no evidence of a paid-media agency
 - hybrid: in-house paid role(s) AND an agency working on paid media
 - agency_run: an agency runs paid media and there's no in-house paid specialist
@@ -29,7 +38,8 @@ Rules:
 - Spend at most ~6 searches per brand; move on.
 
 Return ONLY a JSON array, one object per brand, no prose:
-[{"domain": "...", "brand": "...", "classification": "in_house_only|hybrid|agency_run|unknown",
+[{"domain": "...", "brand": "...", "fit": "yes|enterprise|no|unsure", "uk_based": "yes|no|unsure", "category": "...", "fit_reason": "<=15 words",
+  "classification": "in_house_only|hybrid|agency_run|unknown",
   "confidence": "high|med|low",
   "evidence": [{"signal": "job_ad|agency_case_study|award|title_snippet|other", "summary": "<=20 words", "url": "https://...", "date": "YYYY-MM or unknown"}],
   "in_house_roles_public": ["Paid Social Manager", "..."],

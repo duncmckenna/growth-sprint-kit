@@ -10,7 +10,7 @@ Run the Outra prospecting pipeline. Categories: $ARGUMENTS (if empty, use every 
    - Check that `contact_for_user_agent` in config.yaml is filled. If it isn't, ask me for it.
 2. **Seed.** Run `python -m prospector seed-ads`, adding `--category <c>` for each category given. Report the ads found per keyword and how many pages were unresolved.
 3. If any CSVs exist in `data/imports/`, import each one (use the source named in the filename prefix: `storeleads_`, `builtwith_` or `manual_`), then run `python -m prospector ad-activity`.
-4. **Tech check.** Run `python -m prospector techcheck`, then `python -m prospector page-activity` (re-pulls each shortlisted brand's full active ads, so 'established' is accurate).
+4. **Tech check.** Run `python -m prospector techcheck`, then `python -m prospector dnscheck` (detects Shopify stores that block homepage checks), then `python -m prospector page-activity` (re-pulls each shortlisted brand's full active ads, so 'established' is accurate).
 5. **Agency research.**
    - Run `python -m prospector export-batches`.
    - Then follow `.claude/commands/classify-agency.md` exactly.

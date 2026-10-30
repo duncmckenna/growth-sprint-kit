@@ -205,3 +205,22 @@ def test_techcheck_resumes_and_time_limit():
     assert res["checked"] == 0
     res = techcheck.run(CFG, fetcher=FakeFetcher(), refresh=True, max_minutes=-1, quiet=True)
     assert res["checked"] == 0 and res["not_reached_time_limit"] == len(accs)
+
+
+def test_dns_shopify_and_fit_routing():
+    run_seed_and_tech()
+    fake = {"loafsofas.co.uk": ("loafsofas.co.uk", [], ["23.227.38.65"]),
+            "agencyrunbeds.com": ("agencyrunbeds.com", [], ["3.1.2.3"])}
+    def resolver(h):
+        if h in fake: return fake[h]
+        raise OSError("nx")
+    res = techcheck.dnscheck(resolver=resolver)
+    assert res["shopify_by_dns"] == 1
+    assert load_accounts()["loafsofas.co.uk"]["shopify_dns"] is True
+    acc = {"domain": "big.co.uk", "tech": {"shopify": True, "gbp": True}, "active_ads": 40,
+           "fit": {"fit": "enterprise"}, "agency": {"classification": "in_house_only", "evidence": [{"url": "https://x"}]}}
+    assert score.score_account(acc, CFG)["route"] == "enterprise_sales"
+    acc["fit"] = {"fit": "no"}
+    assert score.score_account(acc, CFG)["route"] == "not_icp"
+    blocked = {"domain": "shopify-blocked.com", "shopify_dns": True, "tech_status": "http_429"}
+    assert classify.prefilter(blocked)

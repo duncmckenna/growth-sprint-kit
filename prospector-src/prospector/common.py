@@ -20,6 +20,7 @@ NOISE_DOMAINS = {
     "play.google.com", "tiktok.com", "shopify.com", "myshopify.com", "wayfair.co.uk",
     "whatsapp.com", "calendly.com", "linkin.bio", "typeform.com", "gov.uk", "gofundme.com",
     "eventbrite.co.uk", "eventbrite.com", "trustpilot.com", "messenger.com", "threads.net", "fb.com", "m.me",
+    "temu.com", "alibaba.com", "aliexpress.com", "yahoo.com", "tinyurl.com", "shein.com", "joybuy.co.uk", "lookfantastic.com",
 }
 
 # Advertisers that aren't D2C retailers but whose ad text matches furniture keywords:

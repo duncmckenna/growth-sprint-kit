@@ -18,6 +18,7 @@ The output is `out/prospects.csv` and `out/summary.md`, company-level and routed
 | 1b | `python -m prospector import <csv> --source storeleads\|builtwith\|manual` | Optional extra seed lists |
 | 1c | `python -m prospector ad-activity` | Ad Library lookup for imported accounts |
 | 2 | `python -m prospector techcheck` | One polite homepage GET per domain: Shopify, Klaviyo, HubSpot, Customer.io, pixels, GBP |
+| 2a | `python -m prospector dnscheck` | Shopify detection via DNS (Shopify storefronts rate-limit homepage checks; DNS doesn't) |
 | 2b | `python -m prospector page-activity` | Re-pull each shortlisted brand's own active ads by page_id: accurate ad count + `established` (an ad running 30+ days) |
 | 3 | `python -m prospector export-batches` then `/classify-agency` then `python -m prospector merge` | Agency-involvement research by parallel subagents |
 | 4 | `python -m prospector score` | Scores, tiers and routes |

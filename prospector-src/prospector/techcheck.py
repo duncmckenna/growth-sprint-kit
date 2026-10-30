@@ -5,6 +5,7 @@ through GTM don't appear in the raw HTML.
 """
 import random
 import re
+import socket
 import time
 from concurrent.futures import ThreadPoolExecutor
 from urllib import robotparser
@@ -91,6 +92,37 @@ class Fetcher:
 
 
 RETRYABLE = ("http_429", "http_503", "http_500", "http_502", "error:")
+
+SHOPIFY_IP_PREFIX = "23.227.38."      # Shopify's storefront IP range
+
+
+def shopify_by_dns(domain, resolver=None):
+    """True if the domain (or www.) resolves to Shopify. DNS isn't rate-limited like storefronts."""
+    resolve = resolver or socket.gethostbyname_ex
+    for host in (domain, f"www.{domain}"):
+        try:
+            name, aliases, ips = resolve(host)
+        except OSError:
+            continue
+        if any(ip.startswith(SHOPIFY_IP_PREFIX) for ip in ips) or any("myshopify" in a for a in aliases):
+            return True
+    return False
+
+
+def dnscheck(resolver=None, workers=16):
+    """Mark Shopify stores via DNS for every account (fast; fills the gap left by 429s)."""
+    accounts = load_accounts()
+    doms = list(accounts)
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        results = list(ex.map(lambda d: (d, shopify_by_dns(d, resolver)), doms))
+    n = 0
+    for d, is_shop in results:
+        accounts[d]["shopify_dns"] = is_shop
+        if is_shop:
+            accounts[d].setdefault("tech", {})["shopify"] = True
+            n += 1
+    save_accounts(accounts)
+    return {"checked": len(doms), "shopify_by_dns": n}
 
 
 def run(cfg, fetcher=None, refresh=False, retry_failed=False, max_minutes=None, quiet=False):

@@ -5,6 +5,7 @@
   ad-activity                      Meta Ad Library lookup for imported accounts
   page-activity                    Re-pull full active ads per shortlisted brand (accurate 'established')
   techcheck [--refresh|--retry-failed]  Homepage stack check (Shopify, Klaviyo, pixels, GBP)
+  dnscheck                         Detect Shopify stores via DNS (fast; not rate-limited)
   export-batches [--all]           Write research batches for /classify-agency
   merge                            Validate + merge subagent research results
   score                            Write out/prospects.csv and out/summary.md
@@ -25,8 +26,8 @@ def main():
     sub.add_parser("ad-activity")
     sub.add_parser("page-activity")
     s = sub.add_parser("techcheck"); s.add_argument("--refresh", action="store_true"); s.add_argument("--retry-failed", action="store_true"); s.add_argument("--max-minutes", type=float)
-    s = sub.add_parser("export-batches"); s.add_argument("--all", action="store_true"); s.add_argument("--refresh", action="store_true")
-    sub.add_parser("merge"); sub.add_parser("score"); sub.add_parser("status")
+    s = sub.add_parser("export-batches"); s.add_argument("--all", action="store_true"); s.add_argument("--refresh", action="store_true"); s.add_argument("--limit", type=int)
+    sub.add_parser("merge"); sub.add_parser("score"); sub.add_parser("status"); sub.add_parser("dnscheck")
     a = ap.parse_args()
     cfg = load_config()
 
@@ -41,7 +42,9 @@ def main():
     elif a.cmd == "techcheck":
         res = techcheck.run(cfg, refresh=a.refresh, retry_failed=a.retry_failed, max_minutes=a.max_minutes)
     elif a.cmd == "export-batches":
-        res = classify.export_batches(cfg, include_all=a.all, refresh=a.refresh)
+        res = classify.export_batches(cfg, include_all=a.all, refresh=a.refresh, limit=a.limit)
+    elif a.cmd == "dnscheck":
+        res = techcheck.dnscheck()
     elif a.cmd == "merge":
         res = classify.merge_results()
     elif a.cmd == "score":

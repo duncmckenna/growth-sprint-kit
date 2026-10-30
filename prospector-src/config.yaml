@@ -48,3 +48,4 @@ scoring:
 
 classify:
   batch_size: 10                # brands per research subagent
+  max_brands: 50                # research the top N prefiltered brands per run (re-run for more)
